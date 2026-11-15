@@ -1,26 +1,26 @@
 
-            # Show R's error message without request headers or credentials.
-            basic_auth = base64.b64encode(f"{username}:{password}".encode()).decode()
-            for secret in (basic_auth, password, username):
-                if secret:
-                    output = output.replace(secret, "[redacted]")
-            lines = [
-                line.strip() for line in output.splitlines()
-                if line.lstrip().startswith(("Error", "!"))
-                and "authorization" not in line.lower()
-            ]
-            detail = " ".join(lines[-3:])[:500]
-            message = "weather.r stopped before creating the animation."
-            if detail:
-                message = f"{message} {detail}"
-            else:
-                message = f"{message} R exited with status {error.returncode}."
-            raise ValueError(message) from None
+# Show R's error message without request headers or credentials.
+basic_auth = base64.b64encode(f"{username}:{password}".encode()).decode()
+for secret in (basic_auth, password, username):
+    if secret:
+        output = output.replace(secret, "[redacted]")
+lines = [
+    line.strip() for line in output.splitlines()
+    if line.lstrip().startswith(("Error", "!"))
+    and "authorization" not in line.lower()
+]
+detail = " ".join(lines[-3:])[:500]
+message = "weather.r stopped before creating the animation."
+if detail:
+    message = f"{message} {detail}"
+else:
+    message = f"{message} R exited with status {error.returncode}."
+raise ValueError(message) from None
 
-        path = Path(folder) / GIF_PATH
-        if not path.is_file():
-            raise ValueError("weather.r did not create the expected GIF.")
-        return path.read_bytes()
+path = Path(folder) / GIF_PATH
+if not path.is_file():
+raise ValueError("weather.r did not create the expected GIF.")
+return path.read_bytes()
 
 
 def show_gif(data, filename, alt):
