@@ -117,6 +117,7 @@ def validate_location(latitude, longitude, buffer_km):
 
 st.set_page_config(page_title="Earth’s Next Season", layout="wide")
 st.title("Earth’s Next Season")
+st.caption("A project for NASA Space Apps Challenge 2026 by Micheal La Vance and Shaina Mishra")
 
 with st.form("shared_location"):
     lat_column, lon_column, buffer_column = st.columns(3)
@@ -145,7 +146,8 @@ if "location" in st.session_state:
 
 weather, vegetation = st.columns(2, gap="large")
 with weather:
-    st.header("Air temperature forecast")
+    st.header("Air Temperature Forecast")
+    st.caption("Meteomatics air temperature forecasts every six hours for seven days.")
     if submitted:
         try:
             with st.spinner("Fetching Meteomatics forecasts and rendering the animation…"):
