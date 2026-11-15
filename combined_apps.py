@@ -15,8 +15,10 @@ GIF_PATH = Path("forecast_output") / "temperature_forecast.gif"
 
 def forecast_gif(latitude, longitude, buffer_km):
     rscript = shutil.which("Rscript")
-    if rscript is None or not R_SCRIPT.is_file():
-        raise ValueError("Install Rscript and place weather.r next to streamlit_app.py.")
+    if not R_SCRIPT.is_file():
+        raise ValueError("Add weather.r next to combined_apps.py in GitHub. The filename is case-sensitive.")
+    if rscript is None:
+        raise ValueError("Rscript was not found. On Streamlit Cloud, add r-base to packages.txt and rebuild the app.")
 
     try:
         username = st.secrets["METEOMATICS_USER"]
@@ -98,9 +100,9 @@ st.title("Weather and Vegetation Explorer")
 with st.form("shared_location"):
     lat_column, lon_column, buffer_column = st.columns(3)
     with lat_column:
-        latitude = st.number_input("Center latitude", -80.0, 84.0, value=None, format="%.5f")
+        latitude = st.number_input("Center latitude", -80.0, 84.0, value=42.75, format="%.5f")
     with lon_column:
-        longitude = st.number_input("Center longitude", -180.0, 180.0, value=None, format="%.5f")
+        longitude = st.number_input("Center longitude", -180.0, 180.0, value=-84.55, format="%.5f")
     with buffer_column:
         buffer_km = st.number_input("Buffer from center (km)", 0.5, 5.0, 2.0, 0.5)
     submitted = st.form_submit_button("Generate both animations", type="primary")
