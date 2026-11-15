@@ -7,3 +7,4 @@ pathlib
 odc-stac
 rioxarray
 bottleneck
+streamlit

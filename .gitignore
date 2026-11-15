@@ -2,3 +2,4 @@ ndvi_output/
 .venv/
 tempfiles/
 test.ipynb
+__pycache__/
