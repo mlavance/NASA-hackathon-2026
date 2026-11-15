@@ -1,0 +1,4 @@
+ndvi_output/
+.venv/
+tempfiles/
+test.ipynb
