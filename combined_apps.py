@@ -1,35 +1,3 @@
-import base64
-import logging
-import math
-import os
-import shutil
-import subprocess
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
-import streamlit as st
-
-R_SCRIPT = Path(__file__).with_name("weather.r").resolve()
-GIF_PATH = Path("forecast_output") / "temperature_forecast.gif"
-
-
-def forecast_gif(latitude, longitude, buffer_km):
-    rscript = shutil.which("Rscript")
-    if rscript is None or not R_SCRIPT.is_file():
-        raise ValueError("Install Rscript and place weather.r next to streamlit_app.py.")
-
-    try:
-        username = st.secrets["METEOMATICS_USER"]
-        password = st.secrets["METEOMATICS_PASSWORD"]
-    except (FileNotFoundError, KeyError):
-        raise ValueError("Add the Meteomatics credentials in Streamlit Secrets.") from None
-
-    env = {
-        **os.environ,
-        "WEATHER_WEB": "1",
-        "WEATHER_LATITUDE": str(latitude),
-        "WEATHER_LONGITUDE": str(longitude),
-        "WEATHER_BUFFER_KM": str(buffer_km),
         "METEOMATICS_USER": username,
         "METEOMATICS_PASSWORD": password,
     }
@@ -98,9 +66,9 @@ st.title("Weather and Vegetation Explorer")
 with st.form("shared_location"):
     lat_column, lon_column, buffer_column = st.columns(3)
     with lat_column:
-        latitude = st.number_input("Center latitude", -80.0, 84.0, value=None, format="%.5f")
+        latitude = st.number_input("Center latitude", -80.0, 84.0, value=42.75, format="%.5f")
     with lon_column:
-        longitude = st.number_input("Center longitude", -180.0, 180.0, value=None, format="%.5f")
+        longitude = st.number_input("Center longitude", -180.0, 180.0, value=-84.55, format="%.5f")
     with buffer_column:
         buffer_km = st.number_input("Buffer from center (km)", 0.5, 5.0, 2.0, 0.5)
     submitted = st.form_submit_button("Generate both animations", type="primary")
