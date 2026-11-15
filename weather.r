@@ -138,12 +138,16 @@ build_forecast <- function(preview_only) {
           ),
           time_label, center_label, freezing_pct
         ),
-        caption = "Source: Meteomatics Weather API | Air temperature 2 m above ground"
+        caption = "Source: Meteomatics Weather API | Air temperature 0.002 km above ground"
       ) +
       theme_minimal(base_size = 12) +
       theme(
         axis.title = element_blank(), axis.text = element_blank(),
-        axis.ticks = element_blank(), plot.subtitle = element_text(family = "mono"),
+        axis.ticks = element_blank(),
+        plot.title.position = "plot",
+        plot.caption.position = "plot",
+        plot.subtitle = element_text(family = "mono", size = 9),
+        plot.caption = element_text(hjust = 0, size = 8),
         plot.margin = margin(6, 6, 6, 6),
         legend.key.height = grid::unit(30, "mm"),
         legend.key.width = grid::unit(5, "mm"),
