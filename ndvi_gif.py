@@ -1,5 +1,4 @@
 import datetime as dt
-import io
 import math
 import os
 import tempfile
@@ -19,6 +18,11 @@ def create_gif(LON, LAT, BUFFER):
     delta_lat = BUFFER / 111.32
     delta_lon = BUFFER / (111.32 * math.cos(math.radians(LAT)))
     BBOX = [LON - delta_lon, LAT - delta_lat, LON + delta_lon, LAT + delta_lat]
+
+    if BBOX[0] < -180 or BBOX[2] > 180 or BBOX[1] < -80 or BBOX[3] > 84:
+        raise ValueError("Choose an area within the UTM latitude range that does not cross the date line.")
+    utm_zone = min(60, int((LON + 180) // 6) + 1)
+    crs = f"EPSG:{(32600 if LAT >= 0 else 32700) + utm_zone}"
 
     TODAY      = dt.date.today()
     START_DATE = TODAY - dt.timedelta(days=365)
@@ -47,7 +51,7 @@ def create_gif(LON, LAT, BUFFER):
     ds = odc.stac.load(
         items,
         bands=["B04", "B08"],
-        crs="EPSG:32617",
+        crs=crs,
         resolution=RESOLUTION,
         bbox=BBOX,
         groupby="solar_day",
@@ -55,11 +59,14 @@ def create_gif(LON, LAT, BUFFER):
     )
     red = ds["B04"].astype("float32") / 10_000.0
     nir = ds["B08"].astype("float32") / 10_000.0
-    ndvi = (nir - red) / (nir + red + 1e-8)
+    ndvi = ((nir - red) / (nir + red)).where((nir > 0) & (red > 0))
 
     ndvi_monthly = ndvi.resample(time="MS").median(skipna=True)
     ndvi_monthly = ndvi_monthly.compute()
-    ndvi_monthly = ndvi_monthly.interpolate_na(dim="time", method="linear")
+    if ndvi_monthly.sizes["time"] > 1:
+        ndvi_monthly = ndvi_monthly.interpolate_na(dim="time", method="linear")
+    if not np.isfinite(ndvi_monthly.values).any():
+        raise ValueError("No valid NDVI pixels were found in the selected area.")
 
     ndvi_np = ndvi_monthly.values
     times   = ndvi_monthly.time.values
@@ -72,14 +79,18 @@ def create_gif(LON, LAT, BUFFER):
     CMAP = plt.get_cmap("YlGn").copy()
     CMAP.set_bad(color="#d3d3d3")
 
-    fig, ax = plt.subplots(figsize=(6, 6), dpi=90)
+    # Match the forecast GIF's 720 × 720 canvas and give the map more room.
+    fig = plt.figure(figsize=(6, 6), dpi=120, facecolor="white")
+    ax = fig.add_axes([0.025, 0.085, 0.75, 0.75])
+    legend_ax = fig.add_axes([0.81, 0.26, 0.028, 0.40])
     ax.set_axis_off()
     im = ax.imshow(
         np.ma.masked_invalid(ndvi_np[0]),
         cmap=CMAP, vmin=VMIN, vmax=VMAX,
         extent=extent, origin="upper", interpolation="nearest",
     )
-    fig.colorbar(im, ax=ax, shrink=0.8, label="NDVI")
+    legend = fig.colorbar(im, cax=legend_ax, label="NDVI")
+    legend.ax.tick_params(labelsize=9)
 
     def update(i):
         im.set_data(np.ma.masked_invalid(ndvi_np[i]))
