@@ -1,9 +1,1 @@
-matplotlib
-numpy
-planetary_computer
-pystac_client
-xarray
-pathlib
-odc-stac
-rioxarray
-bottleneck
+streamlit
