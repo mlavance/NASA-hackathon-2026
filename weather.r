@@ -126,7 +126,9 @@ build_forecast <- function(preview_only) {
         low = "#2166ac", mid = "#f7f7f7", high = "#b35806", midpoint = 0,
         limits = c(-scale_limit, scale_limit),
         breaks = seq(-scale_limit, scale_limit, by = 4),
-        na.value = "grey80", name = "Air temp. (°C)"
+        na.value = "grey80",
+        name = "Air temperature (°C) at 0.002 km above ground",
+        guide = guide_colourbar(title.position = "top")
       ) +
       labs(
         title = "Air Temperature Forecast",
@@ -137,23 +139,23 @@ build_forecast <- function(preview_only) {
             "Valid cells are map squares with a temperature forecast."
           ),
           time_label, center_label, freezing_pct
-        ),
-        caption = "Source: Meteomatics Weather API | Air temperature 0.002 km above ground"
+        )
       ) +
       theme_minimal(base_size = 12) +
       theme(
         axis.title = element_blank(), axis.text = element_blank(),
         axis.ticks = element_blank(),
         plot.title.position = "plot",
-        plot.caption.position = "plot",
         plot.subtitle = element_text(family = "mono", size = 9),
-        plot.caption = element_text(hjust = 0, size = 8),
         plot.margin = margin(6, 6, 6, 6),
-        legend.key.height = grid::unit(30, "mm"),
-        legend.key.width = grid::unit(5, "mm"),
-        legend.title = element_text(size = 12),
-        legend.text = element_text(size = 10),
-        legend.box.spacing = grid::unit(4, "pt")
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.width = grid::unit(65, "mm"),
+        legend.key.height = grid::unit(3, "mm"),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 7),
+        legend.margin = margin(0, 0, 0, 0),
+        legend.box.spacing = grid::unit(3, "pt")
       )
   }
 
