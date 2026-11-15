@@ -1,4 +1,3 @@
-
 # Show R's error message without request headers or credentials.
 basic_auth = base64.b64encode(f"{username}:{password}".encode()).decode()
 for secret in (basic_auth, password, username):
