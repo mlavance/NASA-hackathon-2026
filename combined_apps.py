@@ -94,7 +94,9 @@ def show_gif(data, filename, alt):
         'style="display:block;width:100%;max-width:720px;height:auto;">',
         unsafe_allow_html=True,
     )
-    st.download_button("Download GIF", data, filename, "image/gif", key=filename)
+    st.download_button(
+        "Download GIF", data, filename, "image/gif", key=filename, type="primary"
+    )
 
 
 def validate_location(latitude, longitude, buffer_km):
@@ -127,7 +129,7 @@ with st.form("shared_location"):
         longitude = st.number_input("Center longitude", -180.0, 180.0, value=-84.55, format="%.5f")
     with buffer_column:
         buffer_km = st.number_input("Buffer from center (km)", 0.5, 5.0, 2.0, 0.5)
-    submitted = st.form_submit_button("Generate both animations", type="primary")
+    submitted = st.form_submit_button("Generate Animations", type="primary")
 
 if submitted:
     try:
@@ -147,7 +149,7 @@ if "location" in st.session_state:
 weather, vegetation = st.columns(2, gap="large")
 with weather:
     st.header("Air Temperature Forecast")
-    st.caption("Meteomatics air temperature forecasts every six hours for seven days.")
+    st.caption("Meteomatics air temperature at 0.002 km above ground, every six hours for seven days.")
     if submitted:
         try:
             with st.spinner("Fetching Meteomatics forecasts and rendering the animation…"):
@@ -162,7 +164,7 @@ with weather:
         )
 
 with vegetation:
-    st.header("Vegetation history (NDVI)")
+    st.header("Vegetation History (NDVI)")
     st.caption("Monthly Sentinel-2 imagery showing vegetation greenness.")
     if submitted:
         try:
@@ -177,5 +179,5 @@ with vegetation:
             st.error("NDVI generation failed. Check the Streamlit logs for details.")
     if "location" in st.session_state and "ndvi_result" in st.session_state:
         gif, scene_count = st.session_state["ndvi_result"]
-        st.caption(f"{scene_count} source scenes")
         show_gif(gif, "ndvi_monthly.gif", "Monthly Sentinel-2 vegetation greenness")
+        st.caption(f"{scene_count} source scenes")
