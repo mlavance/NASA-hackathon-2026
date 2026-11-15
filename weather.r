@@ -1,3 +1,67 @@
+# Local RStudio packages: install.packages(c("httr2", "ggplot2", "askpass", "gifski"))
+library(httr2)
+library(ggplot2)
+
+preview_only <- FALSE
+
+read_coordinate <- function(label, lower, upper) {
+  repeat {
+    value <- suppressWarnings(as.numeric(trimws(readline(paste0(label, ": ")))))
+    if (is.finite(value) && value >= lower && value <= upper) return(value)
+    message("Enter a number between ", lower, " and ", upper, ".")
+  }
+}
+
+build_forecast <- function(preview_only) {
+  from_website <- identical(Sys.getenv("WEATHER_WEB"), "1")
+  username <- trimws(Sys.getenv("METEOMATICS_USER"))
+  password <- Sys.getenv("METEOMATICS_PASSWORD")
+
+  if (!from_website && interactive()) {
+    if (!nzchar(username)) username <- askpass::askpass("Enter your Meteomatics username")
+    if (!nzchar(password)) password <- askpass::askpass("Enter your Meteomatics password")
+  }
+  if (is.null(username) || !nzchar(trimws(username)) ||
+      is.null(password) || !nzchar(password)) {
+    stop("Meteomatics credentials are required.")
+  }
+
+  if (from_website) {
+    location <- suppressWarnings(as.numeric(Sys.getenv(
+      c("WEATHER_LATITUDE", "WEATHER_LONGITUDE", "WEATHER_BUFFER_KM")
+    )))
+  } else {
+    if (!interactive()) stop("Run in RStudio to enter coordinates interactively.")
+    location <- c(
+      read_coordinate("Center latitude", -80, 84),
+      read_coordinate("Center longitude", -180, 180),
+      read_coordinate("Buffer from center (km)", 0.5, 5)
+    )
+  }
+
+  center_lat <- location[1]
+  center_lon <- location[2]
+  buffer_km <- location[3]
+  if (any(!is.finite(location)) || center_lat < -80 || center_lat > 84 ||
+      abs(center_lon) > 180 || buffer_km < 0.5 || buffer_km > 5) {
+    stop("Invalid center coordinates or buffer.")
+  }
+
+  # Use the same bounding-box calculation as ndvi_gif.py.
+  delta_lat <- buffer_km / 111.32
+  delta_lon <- buffer_km / (111.32 * cos(center_lat * pi / 180))
+  north <- center_lat + delta_lat
+  west <- center_lon - delta_lon
+  south <- center_lat - delta_lat
+  east <- center_lon + delta_lon
+
+  if (south < -80 || north > 84 || west < -180 || east > 180) {
+    stop("Choose an area between 80°S and 84°N that does not cross the date line.")
+  }
+
+  region <- sprintf("%.8f,%.8f_%.8f,%.8f:50x50", north, west, south, east)
+  center_label <- sprintf(
+    "%.2f°%s, %.2f°%s",
     abs(center_lat), if (center_lat < 0) "S" else "N",
     abs(center_lon), if (center_lon < 0) "W" else "E"
   )
