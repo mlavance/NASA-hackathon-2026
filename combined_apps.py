@@ -13,7 +13,7 @@ R_SCRIPT = Path(__file__).with_name("weather.r").resolve()
 GIF_PATH = Path("forecast_output") / "temperature_forecast.gif"
 
 
-def forecast_gif(latitude, longitude, buffer_km):
+def forecast_gif(latitude, longitude, buffer_km, regional_view):
     rscript = shutil.which("Rscript")
     if not R_SCRIPT.is_file():
         raise ValueError("Add weather.r next to combined_apps.py in GitHub. The filename is case-sensitive.")
@@ -32,6 +32,7 @@ def forecast_gif(latitude, longitude, buffer_km):
         "WEATHER_LATITUDE": str(latitude),
         "WEATHER_LONGITUDE": str(longitude),
         "WEATHER_BUFFER_KM": str(buffer_km),
+        "WEATHER_REGION_BUFFER_KM": str(100 if regional_view else buffer_km),
         "METEOMATICS_USER": username,
         "METEOMATICS_PASSWORD": password,
     }
@@ -129,6 +130,10 @@ with st.form("shared_location"):
         longitude = st.number_input("Center longitude", -180.0, 180.0, value=-84.55, format="%.5f")
     with buffer_column:
         buffer_km = st.number_input("Buffer from center (km)", 0.5, 5.0, 2.0, 0.5)
+    regional_view = st.checkbox(
+        "Show a wider weather map (up to 100 km from center)", value=True,
+        help="Turn this off to use the exact same map area for weather and vegetation.",
+    )
     submitted = st.form_submit_button("Generate Animations", type="primary")
 
 if submitted:
@@ -153,7 +158,9 @@ with weather:
     if submitted:
         try:
             with st.spinner("Fetching Meteomatics forecasts and rendering the animation…"):
-                st.session_state["weather_result"] = forecast_gif(latitude, longitude, buffer_km)
+                st.session_state["weather_result"] = forecast_gif(
+                    latitude, longitude, buffer_km, regional_view
+                )
         except ValueError as error:
             st.error(str(error))
     if "location" in st.session_state and "weather_result" in st.session_state:
