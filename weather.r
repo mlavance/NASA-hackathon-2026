@@ -117,6 +117,7 @@ build_forecast <- function(preview_only) {
   draw_map <- function(grid, forecast_time) {
     time_label <- format(forecast_time, "%b %d, %Y, %H:%M UTC", tz = "UTC")
     freezing_pct <- 100 * mean(grid$temp_c <= 0, na.rm = TRUE)
+    temperature_range <- range(grid$temp_c, na.rm = TRUE)
 
     ggplot(grid, aes(longitude, latitude, fill = temp_c)) +
       geom_tile() +
@@ -127,18 +128,25 @@ build_forecast <- function(preview_only) {
         limits = c(-scale_limit, scale_limit),
         breaks = seq(-scale_limit, scale_limit, by = 4),
         na.value = "grey80",
-        name = "Air temperature (°C) at 0.002 km above ground",
-        guide = guide_colourbar(title.position = "top")
+        name = "Air temperature (°C)",
+        guide = guide_colourbar(
+          title.position = "right",
+          label.position = "right",
+          frame.colour = "#333333",
+          ticks.colour = "#333333"
+        )
       ) +
       labs(
         title = "Air Temperature Forecast",
         subtitle = sprintf(
           paste0(
             "%s | Coordinates: %s\n",
+            "Range: %.2f to %.2f °C at 0.002 km above ground\n",
             "%.1f%% of valid grid cells at or below freezing (0°C)\n",
             "Valid cells are map squares with a temperature forecast."
           ),
-          time_label, center_label, freezing_pct
+          time_label, center_label,
+          temperature_range[1], temperature_range[2], freezing_pct
         )
       ) +
       theme_minimal(base_size = 12) +
@@ -148,11 +156,11 @@ build_forecast <- function(preview_only) {
         plot.title.position = "plot",
         plot.subtitle = element_text(family = "mono", size = 9),
         plot.margin = margin(6, 6, 6, 6),
-        legend.position = "bottom",
-        legend.direction = "horizontal",
-        legend.key.width = grid::unit(65, "mm"),
-        legend.key.height = grid::unit(3, "mm"),
-        legend.title = element_text(size = 8),
+        legend.position = "right",
+        legend.direction = "vertical",
+        legend.key.width = grid::unit(4, "mm"),
+        legend.key.height = grid::unit(55, "mm"),
+        legend.title = element_text(size = 8, angle = 90, hjust = 0.5),
         legend.text = element_text(size = 7),
         legend.margin = margin(0, 0, 0, 0),
         legend.box.spacing = grid::unit(3, "pt")
