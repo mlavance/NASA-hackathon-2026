@@ -59,7 +59,26 @@ build_forecast <- function(preview_only) {
     stop("Choose an area between 80°S and 84°N that does not cross the date line.")
   }
 
-  region <- sprintf("%.8f,%.8f_%.8f,%.8f:50x50", north, west, south, east)
+  requested_weather_buffer <- suppressWarnings(as.numeric(
+    Sys.getenv("WEATHER_REGION_BUFFER_KM", unset = as.character(buffer_km))
+  ))
+  if (!is.finite(requested_weather_buffer) ||
+      requested_weather_buffer < buffer_km || requested_weather_buffer > 100) {
+    stop("Invalid weather map buffer.")
+  }
+  km_per_lon_degree <- 111.32 * cos(center_lat * pi / 180)
+  weather_buffer <- min(
+    requested_weather_buffer,
+    111.32 * min(center_lat + 80, 84 - center_lat),
+    km_per_lon_degree * (180 - abs(center_lon))
+  )
+  weather_delta_lat <- weather_buffer / 111.32
+  weather_delta_lon <- weather_buffer / km_per_lon_degree
+  region <- sprintf(
+    "%.8f,%.8f_%.8f,%.8f:50x50",
+    center_lat + weather_delta_lat, center_lon - weather_delta_lon,
+    center_lat - weather_delta_lat, center_lon + weather_delta_lon
+  )
   center_label <- sprintf(
     "%.2f°%s, %.2f°%s",
     abs(center_lat), if (center_lat < 0) "S" else "N",
@@ -114,6 +133,10 @@ build_forecast <- function(preview_only) {
   all_temperatures <- unlist(lapply(grids, function(grid) grid$temp_c))
   scale_limit <- max(4, 4 * ceiling(max(abs(all_temperatures), na.rm = TRUE) / 4))
 
+  # Space the tick labels when the full forecast spans many 4°C intervals.
+  tick_step <- max(4, 4 * ceiling(scale_limit / 12))
+  tick_limit <- floor(scale_limit / tick_step) * tick_step
+
   draw_map <- function(grid, forecast_time) {
     time_label <- format(forecast_time, "%b %d, %Y, %H:%M UTC", tz = "UTC")
     freezing_pct <- 100 * mean(grid$temp_c <= 0, na.rm = TRUE)
@@ -121,12 +144,11 @@ build_forecast <- function(preview_only) {
 
     ggplot(grid, aes(longitude, latitude, fill = temp_c)) +
       geom_tile() +
-      annotate("point", x = center_lon, y = center_lat, size = 2) +
       coord_fixed(ratio = 1 / cos(center_lat * pi / 180), expand = FALSE) +
       scale_fill_gradient2(
         low = "#2166ac", mid = "#f7f7f7", high = "#b35806", midpoint = 0,
         limits = c(-scale_limit, scale_limit),
-        breaks = seq(-scale_limit, scale_limit, by = 4),
+        breaks = seq(-tick_limit, tick_limit, by = tick_step),
         na.value = "grey80",
         name = "Air temperature (°C)",
         guide = guide_colourbar(
@@ -141,11 +163,12 @@ build_forecast <- function(preview_only) {
         subtitle = sprintf(
           paste0(
             "%s | Coordinates: %s\n",
+            "Weather map buffer: %g km from center\n",
             "Range: %.2f to %.2f °C at 0.002 km above ground\n",
             "%.1f%% of valid grid cells at or below freezing (0°C)\n",
             "Valid cells are map squares with a temperature forecast."
           ),
-          time_label, center_label,
+          time_label, center_label, round(weather_buffer, 1),
           temperature_range[1], temperature_range[2], freezing_pct
         )
       ) +
@@ -158,8 +181,8 @@ build_forecast <- function(preview_only) {
         plot.margin = margin(6, 6, 6, 6),
         legend.position = "right",
         legend.direction = "vertical",
-        legend.key.width = grid::unit(4, "mm"),
-        legend.key.height = grid::unit(55, "mm"),
+        legend.key.width = grid::unit(2.5, "mm"),
+        legend.key.height = grid::unit(23, "mm"),
         legend.title = element_text(size = 8, angle = 90, hjust = 0.5),
         legend.text = element_text(size = 7),
         legend.margin = margin(0, 0, 0, 0),
