@@ -121,6 +121,13 @@ def validate_location(latitude, longitude, buffer_km):
 st.set_page_config(page_title="Earth’s Next Season", layout="wide")
 st.title("Earth’s Next Season")
 st.caption("A project for NASA Space Apps Challenge 2026 by Micheal La Vance and Shaina Mishra")
+st.write(
+    'The Earth’s Next Season toolset is a web application that shows two animated maps for the same areas: the vegetation map and the forecasted future air temperature '
+    'for the region. The weather map uses the Meteomatics API to show forecast air temperature every six hours for seven days. Each frame reports the percentage '
+    'of grid cells with valid forecasts at or below 0°C. The vegetation map uses Sentinel-2 imagery from Microsoft Planetary Computer to show monthly changes '
+    'in the Normalized Difference Vegetation Index (NDVI), a measure of vegetation greenness, over roughly the previous year. Users can view the animations side '
+    'by side and download either as a GIF.'
+)
 
 with st.form("shared_location"):
     lat_column, lon_column, buffer_column = st.columns(3)
